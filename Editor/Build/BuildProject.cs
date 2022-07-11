@@ -36,6 +36,87 @@ namespace SuperUnityBuild.BuildTool
             PerformBuild(buildConfigs, options);
         }
 
+        public static void PerformBuild(string[] buildConfigs, BuildOptions options = BuildOptions.None)
+        {
+            int successCount = 0;
+            int failCount = 0;
+
+            // Save current script defines, build constants, etc. so we can restore them after build.
+            string buildConstantsPath = BuildConstantsGenerator.FindFile();
+            string currentBuildConstantsFile = null;
+            if (!string.IsNullOrEmpty(buildConstantsPath))
+            {
+                currentBuildConstantsFile = FileUtil.GetUniqueTempPathInProject();
+                File.Copy(buildConstantsPath, currentBuildConstantsFile);
+            }
+
+            PerformPreBuild(out DateTime buildTime);
+
+            for (int i = 0; i < buildConfigs.Length; i++)
+            {
+                string configKey = buildConfigs[i];
+
+                // Parse build config and perform build.
+                string notification = string.Format("Building ({0}/{1}): ", i + 1, buildConfigs.Length);
+                BuildSettings.projectConfigurations.ParseKeychain(configKey, out BuildReleaseType releaseType, out BuildPlatform platform, out BuildArchitecture arch, out BuildDistribution dist);
+                bool success = BuildPlayer(notification, releaseType, platform, arch, dist, buildTime, options, configKey);
+
+                if (success)
+                    ++successCount;
+                else
+                    ++failCount;
+            }
+
+            PerformPostBuild();
+
+            // Restore editor status.
+            if (!string.IsNullOrEmpty(buildConstantsPath))
+            {
+                File.Copy(currentBuildConstantsFile, buildConstantsPath, true);
+                File.Delete(currentBuildConstantsFile);
+            }
+
+            // Report success/failure.
+            StringBuilder sb = new StringBuilder();
+
+            if (failCount == 0)
+            {
+                sb.AppendFormat("{0} successful build{1}. No failures. ✔️",
+                    successCount, successCount > 1 ? "s" : "");
+            }
+            else if (successCount == 0)
+            {
+                sb.AppendFormat("No successful builds. {0} failure{1}. ✖️",
+                    failCount, failCount > 1 ? "s" : "");
+            }
+            else
+            {
+                sb.AppendFormat("{0} successful build{1}. {2} failure{3}.",
+                    successCount, successCount > 1 ? "s" : "",
+                    failCount, failCount > 1 ? "s" : "");
+            }
+
+            BuildNotificationList.instance.AddNotification(new BuildNotification(
+                    BuildNotification.Category.Notification,
+                    "Build Complete.", sb.ToString(),
+                    true, null));
+
+            // Open output folder if option is enabled and we're not running from the CLI
+            if (BuildSettings.basicSettings.openFolderPostBuild && !Application.isBatchMode)
+            {
+                string outputFolder = BuildSettings.basicSettings.baseBuildFolder;
+
+                try
+                {
+                    System.Diagnostics.Process.Start(outputFolder);
+                }
+                catch
+                {
+                    Debug.LogWarning("Couldn't open output folder '" + outputFolder + "'");
+                }
+            }
+        }
+
         public static void ConfigureEditor(string configKey, BuildOptions options = BuildOptions.None)
         {
             DateTime configureTime = DateTime.Now;
@@ -317,87 +398,6 @@ namespace SuperUnityBuild.BuildTool
                         sb.Replace(keyString, noun, index, keyString.Length);
                         index = sb.ToString().IndexOf(keyString, index + 1);
                     }
-                }
-            }
-        }
-
-        private static void PerformBuild(string[] buildConfigs, BuildOptions options = BuildOptions.None)
-        {
-            int successCount = 0;
-            int failCount = 0;
-
-            // Save current script defines, build constants, etc. so we can restore them after build.
-            string buildConstantsPath = BuildConstantsGenerator.FindFile();
-            string currentBuildConstantsFile = null;
-            if (!string.IsNullOrEmpty(buildConstantsPath))
-            {
-                currentBuildConstantsFile = FileUtil.GetUniqueTempPathInProject();
-                File.Copy(buildConstantsPath, currentBuildConstantsFile);
-            }
-
-            PerformPreBuild(out DateTime buildTime);
-
-            for (int i = 0; i < buildConfigs.Length; i++)
-            {
-                string configKey = buildConfigs[i];
-
-                // Parse build config and perform build.
-                string notification = string.Format("Building ({0}/{1}): ", i + 1, buildConfigs.Length);
-                BuildSettings.projectConfigurations.ParseKeychain(configKey, out BuildReleaseType releaseType, out BuildPlatform platform, out BuildArchitecture arch, out BuildDistribution dist);
-                bool success = BuildPlayer(notification, releaseType, platform, arch, dist, buildTime, options, configKey);
-
-                if (success)
-                    ++successCount;
-                else
-                    ++failCount;
-            }
-
-            PerformPostBuild();
-
-            // Restore editor status.
-            if (!string.IsNullOrEmpty(buildConstantsPath))
-            {
-                File.Copy(currentBuildConstantsFile, buildConstantsPath, true);
-                File.Delete(currentBuildConstantsFile);
-            }
-
-            // Report success/failure.
-            StringBuilder sb = new StringBuilder();
-
-            if (failCount == 0)
-            {
-                sb.AppendFormat("{0} successful build{1}. No failures. ✔️",
-                    successCount, successCount > 1 ? "s" : "");
-            }
-            else if (successCount == 0)
-            {
-                sb.AppendFormat("No successful builds. {0} failure{1}. ✖️",
-                    failCount, failCount > 1 ? "s" : "");
-            }
-            else
-            {
-                sb.AppendFormat("{0} successful build{1}. {2} failure{3}.",
-                    successCount, successCount > 1 ? "s" : "",
-                    failCount, failCount > 1 ? "s" : "");
-            }
-
-            BuildNotificationList.instance.AddNotification(new BuildNotification(
-                    BuildNotification.Category.Notification,
-                    "Build Complete.", sb.ToString(),
-                    true, null));
-
-            // Open output folder if option is enabled.
-            if (BuildSettings.basicSettings.openFolderPostBuild)
-            {
-                string outputFolder = BuildSettings.basicSettings.baseBuildFolder;
-
-                try
-                {
-                    System.Diagnostics.Process.Start(outputFolder);
-                }
-                catch
-                {
-                    Debug.LogWarning("Couldn't open output folder '" + outputFolder + "'");
                 }
             }
         }
