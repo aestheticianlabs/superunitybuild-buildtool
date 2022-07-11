@@ -253,6 +253,7 @@ namespace SuperUnityBuild.BuildTool
             sb.Replace("$TIME", buildTime.ToString("hhmmss"));
 
             sb.Replace("$BUILD", (++productParameters.buildCounter).ToString());
+            sb.Replace("$COMMIT", GetCommitHash());
 
             string retVal = sb.ToString();
             productParameters.buildVersion = retVal;
@@ -264,6 +265,45 @@ namespace SuperUnityBuild.BuildTool
             PlayerSettings.macOS.buildNumber = $"{int.Parse(PlayerSettings.macOS.buildNumber) + 1}";
 
             return retVal;
+        }
+
+        public static string GetCommitHash()
+        {
+            void LogWarning(string message)
+            {
+                Debug.unityLogger.Log(LogType.Warning, "[SuperUnityBuild]", $"Failed to get $COMMIT: {message}");
+                BuildNotificationList.instance.AddNotification(new BuildNotification(BuildNotification.Category.Warning, "Failed to get $COMMIT: ", message));
+            }
+
+            var proc = new System.Diagnostics.Process();
+            proc.StartInfo.FileName = "git";
+            proc.StartInfo.Arguments = "rev-parse --short HEAD";
+            proc.StartInfo.RedirectStandardOutput = true;
+            proc.StartInfo.UseShellExecute = false;
+
+            try
+            {
+                proc.Start();
+            }
+            catch (Exception e)
+            {
+                LogWarning($"Failed to start git process: {e}");
+            }
+
+            if (!proc.WaitForExit(1000))
+            {
+                LogWarning("Process timed out.");
+                return null;
+            }
+
+            if (proc.ExitCode != 0)
+            {
+                LogWarning($"Git process exited with code {proc.ExitCode}");
+            }
+
+            string output = proc.StandardOutput.ReadToEnd();
+            var i = output.IndexOf('\n');
+            return i > 0 ? output.Substring(0, i) : output;
         }
 
         public static string GenerateBuildPath(string prototype, BuildReleaseType releaseType, BuildPlatform buildPlatform, BuildArchitecture arch, BuildDistribution dist, DateTime buildTime)
@@ -295,6 +335,7 @@ namespace SuperUnityBuild.BuildTool
             sb.Replace("$DISTRIBUTION", SanitizeFolderName(dist != null ? dist.distributionName : ""));
             sb.Replace("$VERSION", SanitizeFolderName(BuildSettings.productParameters.buildVersion));
             sb.Replace("$BUILD", BuildSettings.productParameters.buildCounter.ToString());
+            sb.Replace("$COMMIT", GetCommitHash());
             sb.Replace("$PRODUCT_NAME", SanitizeFolderName(releaseType.productName));
 
             return sb.ToString();

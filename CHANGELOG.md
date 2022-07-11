@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- $COMMIT token to include git commit hash in build version or path.
+
 ### Changed
 
 - Added support for building from CLI with specified configuration(s).
