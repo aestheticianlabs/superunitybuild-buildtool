@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace SuperUnityBuild.BuildTool
 {
+    using System.Collections.Generic;
+
     public static class BuildCLI
     {
         /// <summary>
@@ -54,8 +56,34 @@ namespace SuperUnityBuild.BuildTool
             // count valid errors
             var errorCount = BuildNotificationList.instance.errors.Count(error => error.valid == null || error.valid());
 
+            LogNotifications();
+
             // Set exit code to indicate success or failure
             Application.Quit(errorCount > 0 ? 1 : 0);
+        }
+
+        private static void LogNotifications()
+        {
+            void LogList(List<BuildNotification> list)
+            {
+                foreach (var notif in list.Where(notif => notif.valid == null || notif.valid()))
+                {
+                    var logType = notif.cat switch
+                    {
+                        BuildNotification.Category.Notification => LogType.Log,
+                        BuildNotification.Category.Warning => LogType.Warning,
+                        BuildNotification.Category.Error => LogType.Error,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    Debug.unityLogger.Log(logType, notif.title, notif.details);
+                }
+            }
+
+            Log(LogType.Log, "Build notifications:");
+            LogList(BuildNotificationList.instance.errors);
+            LogList(BuildNotificationList.instance.warnings);
+            LogList(BuildNotificationList.instance.notifications);
         }
 
         private static void Log(LogType logType, string message)
