@@ -5,6 +5,7 @@ using UnityEngine;
 namespace SuperUnityBuild.BuildTool
 {
     using System.Collections.Generic;
+    using UnityEditor;
 
     public static class BuildCLI
     {
@@ -59,7 +60,7 @@ namespace SuperUnityBuild.BuildTool
             LogNotifications();
 
             // Set exit code to indicate success or failure
-            Application.Quit(errorCount > 0 ? 1 : 0);
+            EditorApplication.Exit(errorCount > 0 ? 1 : 0);
         }
 
         private static void LogNotifications()
