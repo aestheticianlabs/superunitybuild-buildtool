@@ -51,11 +51,14 @@ namespace SuperUnityBuild.BuildTool
                 BuildProject.BuildAll();
             }
 
+            // count valid errors
+            var errorCount = BuildNotificationList.instance.errors.Count(error => error.valid == null || error.valid());
+
             // Set exit code to indicate success or failure
-            Application.Quit(BuildNotificationList.instance.errors.Count > 0 ? 1 : 0);
+            Application.Quit(errorCount > 0 ? 1 : 0);
         }
 
-        public static void Log(LogType logType, string message)
+        private static void Log(LogType logType, string message)
         {
             Debug.unityLogger.Log(logType, "SuperUnityBuild CLI", message);
         }
