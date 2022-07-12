@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Added support for building from CLI with specified configuration(s).
+- Quit with non-zero exit code if any part of build failed
 - Don't open build folder after build if in batch mode.
 
 ## [5.0.4] - 2022-02-03

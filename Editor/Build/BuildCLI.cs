@@ -13,6 +13,9 @@ namespace SuperUnityBuild.BuildTool
         // todo: support partial chains (i.e. Release, Dev/macOS, etc)?
         public static void PerformBuild()
         {
+            // clear notifications (if any)
+            BuildNotificationList.instance.RefreshAll();
+
             // get build arguments
             var fullArgs = Environment.GetCommandLineArgs();
 
@@ -48,8 +51,8 @@ namespace SuperUnityBuild.BuildTool
                 BuildProject.BuildAll();
             }
 
-            // Exit w/ 0 to indicate success.
-            Application.Quit(0);
+            // Set exit code to indicate success or failure
+            Application.Quit(BuildNotificationList.instance.errors.Count > 0 ? 1 : 0);
         }
 
         public static void Log(LogType logType, string message)
