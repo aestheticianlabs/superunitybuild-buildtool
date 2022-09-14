@@ -223,7 +223,7 @@ namespace SuperUnityBuild.BuildTool
             return string.Join(";", defines.ToArray());
         }
 
-        public static string GenerateVersionString(ProductParameters productParameters, DateTime buildTime)
+        public static string GenerateVersionString(ProductParameters productParameters, DateTime buildTime, bool incrementBuildNumbers = true)
         {
             string prototypeString = productParameters.versionTemplate;
             StringBuilder sb = new StringBuilder(prototypeString);
@@ -260,9 +260,12 @@ namespace SuperUnityBuild.BuildTool
             PlayerSettings.bundleVersion = retVal;
 
             // Increment build numbers for supported platforms
-            PlayerSettings.Android.bundleVersionCode = PlayerSettings.Android.bundleVersionCode + 1;
-            PlayerSettings.iOS.buildNumber = $"{int.Parse(PlayerSettings.iOS.buildNumber) + 1}";
-            PlayerSettings.macOS.buildNumber = $"{int.Parse(PlayerSettings.macOS.buildNumber) + 1}";
+            if (incrementBuildNumbers)
+            {
+                PlayerSettings.Android.bundleVersionCode = PlayerSettings.Android.bundleVersionCode + 1;
+                PlayerSettings.iOS.buildNumber = $"{int.Parse(PlayerSettings.iOS.buildNumber) + 1}";
+                PlayerSettings.macOS.buildNumber = $"{int.Parse(PlayerSettings.macOS.buildNumber) + 1}";
+            }
 
             return retVal;
         }

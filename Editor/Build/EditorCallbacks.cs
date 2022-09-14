@@ -17,7 +17,7 @@ namespace SuperUnityBuild.BuildTool
         {
             if (state == PlayModeStateChange.ExitingEditMode)
             {
-                BuildProject.GenerateVersionString(BuildSettings.productParameters, DateTime.Now);
+                BuildProject.GenerateVersionString(BuildSettings.productParameters, DateTime.Now, false);
             }
         }
     }
