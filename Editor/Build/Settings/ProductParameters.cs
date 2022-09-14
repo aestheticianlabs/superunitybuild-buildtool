@@ -12,6 +12,7 @@ namespace SuperUnityBuild.BuildTool
         [Tooltip("Recognized tokens for the version template: $ADJECTIVE, $NOUN, $YEAR, $MONTH, $DAY, $TIME, $DAYSSINCE(\"Date\"), $SECONDS, $BUILD, $COMMIT"), FormerlySerializedAs("version")] public string versionTemplate = "1.0.0.$BUILD";
         [Tooltip("If enabled, a new version will be generated each time a build is performed")] public bool autoGenerate = true;
         [Tooltip("If enabled, the build version will be kept in sync with the version string from Player Settings")] public bool syncWithPlayerSettings = false;
+        [Tooltip("If enabled, the version will be updated every time playmode is entered.")] public bool generateOnPlay = false;
 
         [Obsolete("Use buildVersion instead")]
         public string lastGeneratedVersion => buildVersion;

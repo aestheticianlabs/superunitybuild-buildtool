@@ -39,6 +39,8 @@ namespace SuperUnityBuild.BuildTool
                 EditorGUILayout.PropertyField(property.FindPropertyRelative("versionTemplate"));
 
                 EditorGUILayout.PropertyField(property.FindPropertyRelative("autoGenerate"), new GUIContent("Auto-Generate Version"));
+
+                EditorGUILayout.PropertyField(property.FindPropertyRelative("generateOnPlay"), new GUIContent("Generate on Playmode Entered"));
                 EditorGUI.EndDisabledGroup();
 
                 EditorGUI.BeginDisabledGroup(autoGenerate.boolValue);
