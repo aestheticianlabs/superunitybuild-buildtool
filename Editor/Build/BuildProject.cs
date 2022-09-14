@@ -252,7 +252,9 @@ namespace SuperUnityBuild.BuildTool
             sb.Replace("$DAY", buildTime.ToString("dd"));
             sb.Replace("$TIME", buildTime.ToString("hhmmss"));
 
-            sb.Replace("$BUILD", (++productParameters.buildCounter).ToString());
+            if (incrementBuildNumbers) { productParameters.buildCounter++; }
+
+            sb.Replace("$BUILD", productParameters.buildCounter.ToString());
             sb.Replace("$COMMIT", GetCommitHash());
 
             string retVal = sb.ToString();
