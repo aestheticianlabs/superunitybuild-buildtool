@@ -295,7 +295,7 @@ namespace SuperUnityBuild.BuildTool
                 LogWarning($"Failed to start git process: {e}");
             }
 
-            if (!proc.WaitForExit(1000))
+            if (!proc.WaitForExit(15000))
             {
                 LogWarning("Process timed out.");
                 return null;
