@@ -18,6 +18,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Don't open build folder after build if in batch mode.
 - Write notifications to log for CLI builds
 
+## [7.0.0] - 2023-10-03
+
+### Added
+
+-   Double-click settings assets to assign them as the active settings in the SuperUnityBuild window. (by [@RobProductions](https://github.com/RobProductions))
+-   Customize app build name. (by [@RobProductions](https://github.com/RobProductions))
+-   Customize `BuildConstants` file path. (by [@RobProductions](https://github.com/RobProductions))
+
+### Changed
+
+-   **Breaking change:** Namespaced generated `BuildConstants` class and enums, added `BuildConstants.scriptingBackend` constant.
+-   Remove redundant `dataDirNameFormat` variable from Build Platforms.
+-   Renamed 'Per-Platform' Build Action type to 'Per-Build' to reflect when they are run.
+-   Enhanced support for string token usage in Build Action configurations. Per-Build actions have gained support for `$BASEPATH` and `$BUILDPATH`, whilst Single Run actions can now use `$VERSION`, `$BUILD`, `$YEAR`, `$MONTH`, `$DAY` and `$TIME`, with the time-based tokens corresponding to the time at which the action was run.
+-   Scene list UI overhaul. (by [@RobProductions](https://github.com/RobProductions))
+-   Release list UI overhaul. (by [@RobProductions](https://github.com/RobProductions))
+-   Streamline UI colors. (by [@RobProductions](https://github.com/RobProductions))
+-   Replaced the 'Open SuperUnityBuild' button shown in the Inspector for settings assets with new 'Open in SuperUnityBuild' button to assign them as the active settings in the SuperUnityBuild window. (by [@RobProductions](https://github.com/RobProductions))
+
+### Fixed
+
+-   Remove dependency on .NET Standard 2.1. (by [@RobProductions](https://github.com/RobProductions))
+-   Fix scripting backend not being restored after build. (by [@RobProductions](https://github.com/RobProductions))
+
+## [6.0.1] - 2023-05-26
+
+### Fixed
+
+-   Fix help button text wrapping in certain situations.
+-   Fix regression in 6.0.0 that broke macOS builds in Unity 2022.1+.
+
+## [6.0.0] - 2023-05-16
+
+### Added
+
+-   Support for configuring `symbols.zip` generation on Android platform.
+-   **Breaking change:** Added support for selecting scripting backend per platform. (by [@RobProductions](https://github.com/RobProductions))
+-   Added documentation, changelog and license URLs to package manifest.
+-   Support for selecting multiple device type values on Android platform. (by [@MatthieuG9](https://github.com/MatthieuG9))
+
+### Changed
+
+-   Code refactoring for improved developer experience.
+-   **Breaking change:** Drop support for versions of Unity older than 2020.3 LTS.
+-   Only open build output folder if at least one build has succeeded.
+
+### Fixed
+
+-   Correctly handle inconsistent behaviour of different Unity Editor versions when deleting elements in Inspector lists.
+-   Fixed macOS Xcode project output path.
+-   Fixed Build Platform names not being set before serialization.
+-   iOSBuildType obsolete in U2021.2+ (by [@nickfourtimes](https://github.com/nickfourtimes))
+-   Open build folder fails w/bad slashes (by [@nickfourtimes](https://github.com/nickfourtimes))
+
 ## [5.0.4] - 2022-02-03
 
 ### Fixed
@@ -216,7 +270,10 @@ This release includes all changes from 1.0.0 pre-releases ([1.0.0-pre.1](#100-pr
 -   Fixed issue in Linux build name moving `binaryName` to `BuildArchitecture`. [PR #41](https://github.com/superunitybuild/buildtool/pull/41)
 -   Fixed an issue where custom defines were overwrite when build was finished. [Issue #36](https://github.com/superunitybuild/buildtool/issues/36)
 
-[unreleased]: https://github.com/superunitybuild/buildtool/compare/v5.0.4...HEAD
+[unreleased]: https://github.com/superunitybuild/buildtool/compare/v7.0.0...HEAD
+[7.0.0]: https://github.com/superunitybuild/buildtool/compare/v6.0.1...v7.0.0
+[6.0.1]: https://github.com/superunitybuild/buildtool/compare/v6.0.0...v6.0.1
+[6.0.0]: https://github.com/superunitybuild/buildtool/compare/v5.0.4...v6.0.0
 [5.0.4]: https://github.com/superunitybuild/buildtool/compare/v5.0.3...v5.0.4
 [5.0.3]: https://github.com/superunitybuild/buildtool/compare/v5.0.2...v5.0.3
 [5.0.2]: https://github.com/superunitybuild/buildtool/compare/v5.0.1...v5.0.2

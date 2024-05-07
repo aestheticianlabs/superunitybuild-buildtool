@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,7 +30,7 @@ namespace SuperUnityBuild.BuildTool
                 rt.sceneList.Refresh();
             }
 
-            list = property.FindPropertyRelative("enabledScenes");
+            list = property.FindPropertyRelative("releaseScenes");
 
             if (show)
             {
@@ -40,18 +40,40 @@ namespace SuperUnityBuild.BuildTool
                 string fileGUID;
                 string filePath;
                 string sceneName = "N/A";
+                SerializedProperty sceneActiveProperty;
+                int activeCount = 0;
+                bool foundFirst = false;
+
+                //Find the first scene to label as the start for this release
                 if (list.arraySize > 0)
                 {
-                    platformProperty = list.GetArrayElementAtIndex(0);
-                    fileGUID = platformProperty.FindPropertyRelative("fileGUID").stringValue;
-                    filePath = AssetDatabase.GUIDToAssetPath(fileGUID);
-                    sceneName = Path.GetFileNameWithoutExtension(filePath);
+                    for(int i = 0; i < list.arraySize; i++)
+                    {
+                        platformProperty = list.GetArrayElementAtIndex(i);
+                        sceneActiveProperty = platformProperty.FindPropertyRelative("sceneActive");
+                        if(!sceneActiveProperty.boolValue)
+                        {
+                            //Skip this while searching for first
+                            continue;
+                        }
+                        activeCount++;
+
+                        if(!foundFirst)
+                        {
+                            foundFirst = true;
+
+                            fileGUID = platformProperty.FindPropertyRelative("fileGUID").stringValue;
+                            filePath = AssetDatabase.GUIDToAssetPath(fileGUID);
+                            sceneName = Path.GetFileNameWithoutExtension(filePath);
+                        }
+                    }
                 }
 
                 EditorGUILayout.BeginHorizontal();
 
                 show = list.isExpanded;
-                UnityBuildGUIUtility.DropdownHeader(string.Format("Scenes ({0}) (First Scene: {1})", list.arraySize, sceneName), ref show, false, GUILayout.ExpandWidth(true));
+                UnityBuildGUIUtility.DropdownHeader(string.Format("Scenes ({0}, Active: {1}) (First Scene: {2})", list.arraySize, activeCount, sceneName),
+                    ref show, false, GUILayout.ExpandWidth(true));
                 list.isExpanded = show;
 
                 EditorGUILayout.EndHorizontal();
@@ -64,36 +86,36 @@ namespace SuperUnityBuild.BuildTool
                         fileGUID = platformProperty.FindPropertyRelative("fileGUID").stringValue;
                         filePath = AssetDatabase.GUIDToAssetPath(fileGUID);
                         sceneName = Path.GetFileNameWithoutExtension(filePath);
+                        sceneActiveProperty = platformProperty.FindPropertyRelative("sceneActive");
+
+                        //Top actions + name
+
+                        //Vertical padding
+                        EditorGUILayout.Space(4f);
 
                         EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.TextArea(sceneName + " (" + filePath + ")");
 
-                        EditorGUI.BeginDisabledGroup(i == 0);
-                        if (GUILayout.Button("↑↑", UnityBuildGUIUtility.helpButtonStyle))
-                        {
-                            list.MoveArrayElement(i, 0);
-                        }
-                        if (GUILayout.Button("↑", UnityBuildGUIUtility.helpButtonStyle))
-                        {
-                            list.MoveArrayElement(i, i - 1);
-                        }
-                        EditorGUI.EndDisabledGroup();
+                        sceneActiveProperty.boolValue = UnityBuildGUIUtility.SceneActiveToggle(sceneActiveProperty.boolValue);
+                        UnityBuildGUIUtility.SceneNameLabel(sceneName);
 
-                        EditorGUI.BeginDisabledGroup(i == list.arraySize - 1);
-                        if (GUILayout.Button("↓", UnityBuildGUIUtility.helpButtonStyle))
-                        {
-                            list.MoveArrayElement(i, i + 1);
-                        }
-                        EditorGUI.EndDisabledGroup();
+                        UnityBuildGUIUtility.ReorderArrayControls(list, i);
 
-                        if (GUILayout.Button("X", UnityBuildGUIUtility.helpButtonStyle))
+                        if (UnityBuildGUIUtility.DeleteButton())
                         {
-                            list.DeleteArrayElementAtIndex(i);
+                            list.SafeDeleteArrayElementAtIndex(i);
                         }
-
-                        property.serializedObject.ApplyModifiedProperties();
 
                         EditorGUILayout.EndHorizontal();
+
+                        //Bottom info label
+
+                        EditorGUILayout.BeginHorizontal();
+
+                        UnityBuildGUIUtility.SceneInfoLabel(filePath);
+
+                        EditorGUILayout.EndHorizontal();
+
+                        property.serializedObject.ApplyModifiedProperties();
                     }
                 }
 
@@ -131,25 +153,20 @@ namespace SuperUnityBuild.BuildTool
                         break;
                 }
 
-                if (GUILayout.Button("Clear Scene List", GUILayout.ExpandWidth(true)))
-                {
-                    list.ClearArray();
-                }
+                if (GUILayout.Button("Add Current Scene", GUILayout.ExpandWidth(true)))
+                    GetSceneFilesFromBuildSettings();
 
                 if (GUILayout.Button("Add Scene Files from Build Settings", GUILayout.ExpandWidth(true)))
-                {
                     GetSceneFilesFromBuildSettings();
-                }
 
                 if (GUILayout.Button("Add Scene File Directory", GUILayout.ExpandWidth(true)))
-                {
                     GetSceneFileDirectory("Add Scene Files");
-                }
 
                 if (GUILayout.Button("Set First Scene by File", GUILayout.ExpandWidth(true)))
-                {
                     SetFirstSceneByFile();
-                }
+
+                if (GUILayout.Button("Clear Scene List", GUILayout.ExpandWidth(true)))
+                    list.ClearArray();
 
                 list.serializedObject.ApplyModifiedProperties();
                 property.serializedObject.ApplyModifiedProperties();
@@ -206,7 +223,9 @@ namespace SuperUnityBuild.BuildTool
 
             for (int i = 0; i < scenes.Length; i++)
             {
-                AddScene(AssetDatabase.AssetPathToGUID(scenes[i].path));
+                var thisBuildScene = scenes[i];
+                //Pass the enabled status from the build window
+                AddScene(AssetDatabase.AssetPathToGUID(thisBuildScene.path), thisBuildScene.enabled);
             }
         }
 
@@ -229,22 +248,24 @@ namespace SuperUnityBuild.BuildTool
 
                 if (fileGUID == objGUID)
                 {
-                    list.DeleteArrayElementAtIndex(i);
+                    list.SafeDeleteArrayElementAtIndex(i);
                     break;
                 }
             }
 
             list.InsertArrayElementAtIndex(0);
             list.GetArrayElementAtIndex(0).FindPropertyRelative("fileGUID").stringValue = objGUID;
+            list.GetArrayElementAtIndex(0).FindPropertyRelative("sceneActive").boolValue = true;
         }
 
-        private void AddScene(string objGUID)
+        private void AddScene(string objGUID, bool defaultActive = true)
         {
             if (!string.IsNullOrEmpty(objGUID) && !CheckForDuplicate(objGUID))
             {
                 int addedIndex = list.arraySize;
                 list.InsertArrayElementAtIndex(addedIndex);
                 list.GetArrayElementAtIndex(addedIndex).FindPropertyRelative("fileGUID").stringValue = objGUID;
+                list.GetArrayElementAtIndex(addedIndex).FindPropertyRelative("sceneActive").boolValue = defaultActive;
             }
         }
     }

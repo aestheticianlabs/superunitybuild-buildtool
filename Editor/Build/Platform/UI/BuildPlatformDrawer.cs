@@ -79,12 +79,10 @@ namespace SuperUnityBuild.BuildTool
                         GUILayout.BeginHorizontal();
 
                         distEnabled.boolValue = GUILayout.Toggle(distEnabled.boolValue, GUIContent.none, GUILayout.ExpandWidth(false));
-                        distName.stringValue = BuildProject.SanitizeFolderName(GUILayout.TextField(distName.stringValue));
+                        distName.stringValue = GUILayout.TextField(distName.stringValue.SanitizeFolderName());
 
-                        if (GUILayout.Button("X", UnityBuildGUIUtility.helpButtonStyle))
-                        {
-                            distList.DeleteArrayElementAtIndex(i);
-                        }
+                        if (UnityBuildGUIUtility.DeleteButton())
+                            distList.SafeDeleteArrayElementAtIndex(i);
 
                         dist.serializedObject.ApplyModifiedProperties();
 
@@ -110,10 +108,10 @@ namespace SuperUnityBuild.BuildTool
                     property.serializedObject.ApplyModifiedProperties();
                     GUIUtility.keyboardControl = 0;
                 }
+
                 if (GUILayout.Button("Delete Platform", GUILayout.MaxWidth(150)))
-                {
                     property.FindPropertyRelative("enabled").boolValue = false;
-                }
+
                 GUILayout.EndVertical();
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();

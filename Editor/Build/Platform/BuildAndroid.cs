@@ -11,17 +11,17 @@ namespace SuperUnityBuild.BuildTool
         #region Constants
 
         private const string _name = "Android";
-        private Dictionary<BinaryType, string> _binaryNameFormats = new Dictionary<BinaryType, string>{
+        private readonly Dictionary<BinaryType, string> _binaryNameFormats = new Dictionary<BinaryType, string>{
             {BinaryType.APK, "{0}.apk"},
             {BinaryType.SplitAPK, "{0}"},
             {BinaryType.AAB, "{0}.aab"},
         };
-        private const string _dataDirNameFormat = "{0}_Data";
         private const BuildTargetGroup _targetGroup = BuildTargetGroup.Android;
 
         private const string _apkExpansionFilesTypeVariantId = "APK Expansion Type";
         private const string _buildOutputTypeVariantId = "Build Output";
         private const string _binaryTypeVariantId = "Binary Type";
+        private const string _createSymbolsVariantId = "Create symbols.zip";
         private const string _deviceTypeVariantId = "Device Type";
         private const string _textureCompressionVariantId = "Texture Compression";
         private const string _minSdkVersionVariantId = "Min SDK Version";
@@ -59,7 +59,6 @@ namespace SuperUnityBuild.BuildTool
         public override void Init()
         {
             platformName = _name;
-            dataDirNameFormat = _dataDirNameFormat;
             targetGroup = _targetGroup;
 
             if (architectures == null || architectures.Length == 0)
@@ -69,23 +68,41 @@ namespace SuperUnityBuild.BuildTool
                 };
             }
 
+            if (scriptingBackends == null || scriptingBackends.Length == 0)
+            {
+                scriptingBackends = new BuildScriptingBackend[]
+                {
+                    new BuildScriptingBackend(ScriptingImplementation.Mono2x, false),
+                    new BuildScriptingBackend(ScriptingImplementation.IL2CPP, true),
+                };
+            }
+
             if (variants == null || variants.Length == 0)
             {
                 string[] androidSdkVersionStrings = EnumNamesToArray<AndroidSdkVersions>()
                     .Select(i => i.Replace(_androidApiLevelEnumPrefix, ""))
                     .ToArray();
 
+                string[] createSymbolsOptions =
+#if UNITY_2021_1_OR_NEWER
+                    EnumNamesToArray<AndroidCreateSymbols>().ToArray();
+#else
+                    new string[] { "Disabled", "Enabled" };
+#endif
+
                 variants = new BuildVariant[] {
                     new BuildVariant(_deviceTypeVariantId, EnumNamesToArray<AndroidArchitecture>()
                         .Skip(1)
+                        .SkipLast()
                         .ToArray(),
-                    0),
+                    0, true),
                     new BuildVariant(_textureCompressionVariantId, EnumNamesToArray<MobileTextureSubtarget>(), 0),
                     new BuildVariant(_buildOutputTypeVariantId, EnumNamesToArray<BuildOutputType>(true), 0),
                     new BuildVariant(_binaryTypeVariantId, EnumNamesToArray<BinaryType>(true), 0),
                     new BuildVariant(_apkExpansionFilesTypeVariantId, EnumNamesToArray<ApkExpansionFilesType>(true), 0),
                     new BuildVariant(_minSdkVersionVariantId, androidSdkVersionStrings, 0),
                     new BuildVariant(_targetSdkVersionVariantId, androidSdkVersionStrings, 0),
+                    new BuildVariant(_createSymbolsVariantId, createSymbolsOptions, 0),
                 };
             }
         }
@@ -107,6 +124,9 @@ namespace SuperUnityBuild.BuildTool
                     case _buildOutputTypeVariantId:
                         SetBuildOutputType(key);
                         break;
+                    case _createSymbolsVariantId:
+                        SetCreateSymbols(key);
+                        break;
                     case _deviceTypeVariantId:
                         SetDeviceType(key);
                         break;
@@ -126,6 +146,13 @@ namespace SuperUnityBuild.BuildTool
         private AndroidSdkVersions GetAndroidSdkVersionFromKey(string key)
         {
             return EnumValueFromKey<AndroidSdkVersions>(_androidApiLevelEnumPrefix + key);
+        }
+
+        private void SetApkExpansionFilesType(string key)
+        {
+            ApkExpansionFilesType expansionFilesType = EnumValueFromKey<ApkExpansionFilesType>(key);
+
+            PlayerSettings.Android.useAPKExpansionFiles = expansionFilesType == ApkExpansionFilesType.SplitAppBinary;
         }
 
         private void SetBinaryType(string key)
@@ -154,15 +181,18 @@ namespace SuperUnityBuild.BuildTool
                 architectures[0].binaryNameFormat = "{0}";
         }
 
-        private void SetDeviceType(string key)
+        private void SetCreateSymbols(string key)
         {
-            PlayerSettings.Android.targetArchitectures = EnumValueFromKey<AndroidArchitecture>(key);
+#if UNITY_2021_1_OR_NEWER
+            EditorUserBuildSettings.androidCreateSymbols = EnumValueFromKey<AndroidCreateSymbols>(key);
+#else
+            EditorUserBuildSettings.androidCreateSymbolsZip = key != "Disabled";
+#endif
         }
 
-        private void SetTextureCompression(string key)
+        private void SetDeviceType(string key)
         {
-            EditorUserBuildSettings.androidBuildSubtarget
-                = EnumValueFromKey<MobileTextureSubtarget>(key);
+            PlayerSettings.Android.targetArchitectures = EnumFlagValueFromKey<AndroidArchitecture>(key);
         }
 
         private void SetMinSdkVersion(string key)
@@ -175,11 +205,9 @@ namespace SuperUnityBuild.BuildTool
             PlayerSettings.Android.targetSdkVersion = GetAndroidSdkVersionFromKey(key);
         }
 
-        private void SetApkExpansionFilesType(string key)
+        private void SetTextureCompression(string key)
         {
-            ApkExpansionFilesType expansionFilesType = EnumValueFromKey<ApkExpansionFilesType>(key);
-
-            PlayerSettings.Android.useAPKExpansionFiles = expansionFilesType == ApkExpansionFilesType.SplitAppBinary;
+            EditorUserBuildSettings.androidBuildSubtarget = EnumValueFromKey<MobileTextureSubtarget>(key);
         }
     }
 }

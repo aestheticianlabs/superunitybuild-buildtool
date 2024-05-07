@@ -22,7 +22,7 @@ Features:
 
 ## Basic Usage
 
-Requires Unity 2019.1 or higher. Supports building for Windows, macOS, Linux, iOS, Android, UWP and WebGL.
+Requires Unity 2020.3 or higher. Supports building for Windows, macOS, Linux, iOS, Android, UWP and WebGL.
 
 ### Installation
 
@@ -31,6 +31,10 @@ Official releases of SuperUnityBuild can be installed via [Unity Package Manager
 You can also [download the source zip][download] of this repository and extract its contents into your Unity project's `Packages` directory to install SuperUnityBuild as an embedded package.
 
 You may also want to [install](https://github.com/superunitybuild/buildtool#installation) the optional [BuildActions][buildactions] package to expand SuperUnityBuild's capabilities.
+
+#### Upgrading from previous versions
+
+When upgrading to a new major version, it is recommended to remove all traces of the previous SuperUnityBuild installation (by uninstalling the package and deleting the `Assets/SuperUnityBuild` directory), restart Unity, install the new release and then allow SuperUnityBuild to create a fresh Build Settings asset.
 
 ### Setup
 
