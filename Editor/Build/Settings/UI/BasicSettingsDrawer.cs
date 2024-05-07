@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -54,12 +54,17 @@ namespace SuperUnityBuild.BuildTool
 
                 if (GUILayout.Button("Open Build Folder", GUILayout.ExpandWidth(true)))
                 {
-                    string path = BuildSettings.basicSettings.baseBuildFolder;
+                    string path = Path.GetFullPath(BuildSettings.basicSettings.baseBuildFolder);
                     if (!Directory.Exists(path))
                         Directory.CreateDirectory(path);
 
                     System.Diagnostics.Process.Start(path);
                 }
+
+                GUILayout.Space(20);
+                GUILayout.Label("Build Constants Options", UnityBuildGUIUtility.midHeaderStyle);
+
+                EditorGUILayout.PropertyField(property.FindPropertyRelative("constantsFileLocation"));
 
                 property.serializedObject.ApplyModifiedProperties();
 

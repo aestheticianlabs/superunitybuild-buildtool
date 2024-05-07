@@ -6,16 +6,16 @@ using UnityEngine;
 
 namespace SuperUnityBuild.BuildTool
 {
-    [System.Serializable]
+    [Serializable]
     public class BuildPlatform : ScriptableObject
     {
         public bool enabled = false;
         public BuildDistributionList distributionList = new BuildDistributionList();
         public BuildArchitecture[] architectures = new BuildArchitecture[0];
         public BuildVariant[] variants = new BuildVariant[0];
+        public BuildScriptingBackend[] scriptingBackends = new BuildScriptingBackend[0];
 
         public string platformName;
-        public string dataDirNameFormat;
         public BuildTargetGroup targetGroup;
 
         public virtual void Init()
@@ -39,6 +39,25 @@ namespace SuperUnityBuild.BuildTool
                 }
 
                 return atLeastOneArch;
+            }
+        }
+
+        public bool atLeastOneBackend
+        {
+            get
+            {
+                if (scriptingBackends.Length <= 0)
+                {
+                    return true;
+                }
+
+                bool atLeastOneBackend = false;
+                for (int i = 0; i < scriptingBackends.Length && !atLeastOneBackend; i++)
+                {
+                    atLeastOneBackend |= scriptingBackends[i].enabled;
+                }
+
+                return atLeastOneBackend;
             }
         }
 
@@ -99,6 +118,22 @@ namespace SuperUnityBuild.BuildTool
                 }
             }
 
+            SerializedProperty scriptingBackendList = obj.FindProperty("scriptingBackends");
+
+            if (scriptingBackendList.arraySize > 1)
+            {
+                GUILayout.Label("Scripting Backends", UnityBuildGUIUtility.midHeaderStyle);
+                for (int i = 0; i < scriptingBackendList.arraySize; i++)
+                {
+                    SerializedProperty scriptProperty = scriptingBackendList.GetArrayElementAtIndex(i);
+                    SerializedProperty scriptName = scriptProperty.FindPropertyRelative("name");
+                    SerializedProperty scriptEnabled = scriptProperty.FindPropertyRelative("enabled");
+
+                    scriptEnabled.boolValue = GUILayout.Toggle(scriptEnabled.boolValue, scriptName.stringValue);
+                    scriptProperty.serializedObject.ApplyModifiedProperties();
+                }
+            }
+
             SerializedProperty variantList = obj.FindProperty("variants");
 
             if (variantList.arraySize > 0)
@@ -111,6 +146,7 @@ namespace SuperUnityBuild.BuildTool
                     SerializedProperty variantName = variantProperty.FindPropertyRelative("variantName");
                     SerializedProperty variantValues = variantProperty.FindPropertyRelative("values");
                     SerializedProperty selectedVariantIndex = variantProperty.FindPropertyRelative("selectedIndex");
+                    SerializedProperty isFlag = variantProperty.FindPropertyRelative("isFlag");
 
                     List<string> valueNames = new List<string>(variantValues.arraySize);
                     for (int j = 0; j < variantValues.arraySize; j++)
@@ -121,8 +157,20 @@ namespace SuperUnityBuild.BuildTool
                     GUILayout.BeginHorizontal();
 
                     EditorGUILayout.LabelField(variantName.stringValue);
-                    selectedVariantIndex.intValue =
-                        EditorGUILayout.Popup(selectedVariantIndex.intValue, valueNames.ToArray(), UnityBuildGUIUtility.popupStyle, GUILayout.ExpandWidth(false), GUILayout.MaxWidth(250));
+
+                    if (isFlag.boolValue)
+                    {
+                        // Don't allow 'Nothing' to be selected
+                        int selected = selectedVariantIndex.intValue > 0 ? selectedVariantIndex.intValue : -1;
+
+                        selectedVariantIndex.intValue =
+                            EditorGUILayout.MaskField(selected, valueNames.ToArray(), UnityBuildGUIUtility.popupStyle, GUILayout.ExpandWidth(false), GUILayout.MaxWidth(250));
+                    }
+                    else
+                    {
+                        selectedVariantIndex.intValue =
+                            EditorGUILayout.Popup(selectedVariantIndex.intValue, valueNames.ToArray(), UnityBuildGUIUtility.popupStyle, GUILayout.ExpandWidth(false), GUILayout.MaxWidth(250));
+                    }
 
                     GUILayout.EndHorizontal();
                 }
@@ -143,12 +191,10 @@ namespace SuperUnityBuild.BuildTool
                     GUILayout.BeginHorizontal();
 
                     distEnabled.boolValue = GUILayout.Toggle(distEnabled.boolValue, GUIContent.none, GUILayout.ExpandWidth(false));
-                    distName.stringValue = BuildProject.SanitizeFolderName(GUILayout.TextField(distName.stringValue));
+                    distName.stringValue = GUILayout.TextField(distName.stringValue.SanitizeFolderName());
 
-                    if (GUILayout.Button("X", UnityBuildGUIUtility.helpButtonStyle))
-                    {
-                        distList.DeleteArrayElementAtIndex(i);
-                    }
+                    if (UnityBuildGUIUtility.DeleteButton())
+                        distList.SafeDeleteArrayElementAtIndex(i);
 
                     dist.serializedObject.ApplyModifiedProperties();
 
@@ -184,11 +230,15 @@ namespace SuperUnityBuild.BuildTool
             string name = platformName;
 
             IEnumerable<BuildArchitecture> enabledArchitectures = architectures.Where(item => item.enabled);
+            IEnumerable<BuildScriptingBackend> enabledscriptingBackends = scriptingBackends.Where(item => item.enabled);
 
             List<string> architecturesAndVariants = new List<string>();
 
             if (architectures.Length > 1 && enabledArchitectures.Count() > 0)
                 architecturesAndVariants.AddRange(enabledArchitectures.Select(item => item.ToString()));
+
+            if (scriptingBackends.Length > 1 && enabledscriptingBackends.Count() > 0)
+                architecturesAndVariants.AddRange(enabledscriptingBackends.Select(item => item.ToString()));
 
             if (variants.Length > 0)
                 architecturesAndVariants.AddRange(variants.Select(item => item.ToString()));
@@ -198,6 +248,17 @@ namespace SuperUnityBuild.BuildTool
                 "";
 
             return name;
+        }
+
+        protected static T EnumFlagValueFromKey<T>(string label) where T : Enum
+        {
+            long result = 0;
+            label = label.Replace(" ", "");
+            foreach (string split in label.Split('+'))
+            {
+                result |= Convert.ToInt64((T)Enum.Parse(typeof(T), split));
+            }
+            return (T)Enum.ToObject(typeof(T), result);
         }
 
         protected static T EnumValueFromKey<T>(string label)

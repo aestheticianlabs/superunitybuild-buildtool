@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -51,6 +51,7 @@ namespace SuperUnityBuild.BuildTool
                 if (GUILayout.Button("Add Platform", GUILayout.ExpandWidth(false), GUILayout.MaxWidth(150)))
                 {
                     BuildPlatform addedBuildPlatform = ScriptableObject.CreateInstance(availablePlatformTypeList[index]) as BuildPlatform;
+                    addedBuildPlatform.name = addedBuildPlatform.platformName;
                     platformList.platforms.Add(addedBuildPlatform);
 
                     AssetDatabase.AddObjectToAsset(addedBuildPlatform, BuildSettings.instance);
@@ -79,46 +80,44 @@ namespace SuperUnityBuild.BuildTool
             {
                 SerializedProperty listEntry = list.GetArrayElementAtIndex(i);
 
-                BuildPlatform buildPlatform = listEntry.objectReferenceValue as BuildPlatform;
-                if (buildPlatform == null)
+                BuildPlatform platform = listEntry.objectReferenceValue as BuildPlatform;
+                if (platform == null)
                 {
-                    list.DeleteArrayElementAtIndex(i);
+                    list.SafeDeleteArrayElementAtIndex(i);
                     --i;
                     continue;
                 }
 
-                SerializedObject serializedBuildPlatform = new SerializedObject(buildPlatform);
+                SerializedObject serializedBuildPlatform = new SerializedObject(platform);
 
                 EditorGUILayout.BeginHorizontal();
                 bool show = listEntry.isExpanded;
-                string tooltip = buildPlatform.ToString();
+                string tooltip = platform.ToString();
                 string text = UnityBuildGUIUtility.ToLabel(tooltip);
 
                 UnityBuildGUIUtility.DropdownHeader(new GUIContent(text, tooltip), ref show, false, GUILayout.ExpandWidth(true));
 
                 listEntry.isExpanded = show;
 
-                if (GUILayout.Button("X", UnityBuildGUIUtility.helpButtonStyle))
+                if (UnityBuildGUIUtility.DeleteButton())
                 {
-                    List<BuildPlatform> buildPlatforms = BuildSettings.platformList.platforms;
+                    List<BuildPlatform> platforms = BuildSettings.platformList.platforms;
 
-                    // Destroy underlying object.
-                    ScriptableObject.DestroyImmediate(buildPlatforms[i], true);
+                    // Destroy underlying object
+                    ScriptableObject.DestroyImmediate(platforms[i], true);
                     AssetDatabaseUtility.ImportAsset(AssetDatabase.GetAssetPath(BuildSettings.instance));
 
-                    // Remove object reference from list.
-                    // TODO: Why do I need to call this twice? First call nulls reference, second one then deletes null entry.
-                    list.DeleteArrayElementAtIndex(i);
-                    list.DeleteArrayElementAtIndex(i);
+                    // Remove object reference from list
+                    list.SafeDeleteArrayElementAtIndex(i);
                     show = false;
                 }
 
                 EditorGUILayout.EndHorizontal();
 
-                if (show && buildPlatform.enabled)
+                if (show && platform.enabled)
                 {
                     EditorGUILayout.BeginVertical(UnityBuildGUIUtility.dropdownContentStyle);
-                    buildPlatform.Draw(serializedBuildPlatform);
+                    platform.Draw(serializedBuildPlatform);
                     EditorGUILayout.EndVertical();
                 }
             }

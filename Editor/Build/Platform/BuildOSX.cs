@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 
@@ -12,9 +12,8 @@ namespace SuperUnityBuild.BuildTool
         private const string _name = "macOS";
         private Dictionary<BuildOutputType, string> _binaryNameFormats = new Dictionary<BuildOutputType, string>{
             {BuildOutputType.App, "{0}.app"},
-            {BuildOutputType.XcodeProject, "{0}.xcodeproj"},
+            {BuildOutputType.XcodeProject, "{0}"},
         };
-        private const string _dataDirNameFormat = "{0}.app/Contents";
         private const BuildTargetGroup _targetGroup = BuildTargetGroup.Standalone;
 
         private const string _buildOutputTypeVariantId = "Build Output";
@@ -46,7 +45,6 @@ namespace SuperUnityBuild.BuildTool
         public override void Init()
         {
             platformName = _name;
-            dataDirNameFormat = _dataDirNameFormat;
             targetGroup = _targetGroup;
 
             if (architectures == null || architectures.Length == 0)
@@ -56,12 +54,19 @@ namespace SuperUnityBuild.BuildTool
                 };
             }
 
+            if (scriptingBackends == null || scriptingBackends.Length == 0)
+            {
+                scriptingBackends = new BuildScriptingBackend[]
+                {
+                    new BuildScriptingBackend(ScriptingImplementation.Mono2x, true),
+                    new BuildScriptingBackend(ScriptingImplementation.IL2CPP, false),
+                };
+            }
+
             if (variants == null || variants.Length == 0)
             {
                 variants = new BuildVariant[] {
-#if UNITY_2020_2_OR_NEWER
                     new BuildVariant(_macOSArchitectureVariantId, EnumNamesToArray<MacOSArchitecture>(true), 0),
-#endif
                     new BuildVariant(_buildOutputTypeVariantId, EnumNamesToArray<BuildOutputType>(true), 0)
                 };
             }
@@ -98,8 +103,14 @@ namespace SuperUnityBuild.BuildTool
 
         private void SetMacOSArchitecture(string key)
         {
-#if UNITY_2020_2_OR_NEWER && UNITY_STANDALONE_OSX
-            UnityEditor.OSXStandalone.UserBuildSettings.architecture = (UnityEditor.OSXStandalone.MacOSArchitecture)EnumValueFromKey<MacOSArchitecture>(key);
+#if UNITY_STANDALONE_OSX
+            UnityEditor.OSXStandalone.UserBuildSettings.architecture =
+#if UNITY_2022_1_OR_NEWER
+                (UnityEditor.Build.OSArchitecture)
+#else
+                (UnityEditor.OSXStandalone.MacOSArchitecture)
+#endif
+                    EnumValueFromKey<MacOSArchitecture>(key);
 #endif
         }
     }

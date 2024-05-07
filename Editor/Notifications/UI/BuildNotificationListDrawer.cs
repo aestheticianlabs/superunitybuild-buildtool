@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 
 namespace SuperUnityBuild.BuildTool
@@ -13,6 +13,7 @@ namespace SuperUnityBuild.BuildTool
         private SerializedProperty notificationsList;
 
         private GUIContent clearButtonContent = new GUIContent("X", "Clear");
+        private Color32 logHeaderColor = new Color32(100, 200, 240, 255);
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -47,16 +48,14 @@ namespace SuperUnityBuild.BuildTool
             EditorGUILayout.BeginHorizontal();
             GUI.backgroundColor = Color.red;
             UnityBuildGUIUtility.DropdownHeader(
-                "Errors (" + errorCount + ")",
+                $"Errors ({errorCount})",
                 ref show, true,
                 GUILayout.ExpandWidth(true));
 
             if (clearableCount > 0)
             {
                 if (GUILayout.Button(clearButtonContent, UnityBuildGUIUtility.helpButtonStyle))
-                {
                     BuildNotificationList.instance.RefreshErrors();
-                }
             }
 
             GUI.backgroundColor = defaultBackgroundColor;
@@ -102,16 +101,14 @@ namespace SuperUnityBuild.BuildTool
             EditorGUILayout.BeginHorizontal();
             GUI.backgroundColor = Color.yellow;
             UnityBuildGUIUtility.DropdownHeader(
-                "Warnings (" + warningCount + ")",
+                $"Warnings ({warningCount})",
                 ref show, true,
                 GUILayout.ExpandWidth(true));
 
             if (clearableCount > 0)
             {
                 if (GUILayout.Button(clearButtonContent, UnityBuildGUIUtility.helpButtonStyle))
-                {
                     BuildNotificationList.instance.RefreshWarnings();
-                }
             }
 
             GUI.backgroundColor = defaultBackgroundColor;
@@ -155,18 +152,16 @@ namespace SuperUnityBuild.BuildTool
             Color defaultBackgroundColor = GUI.backgroundColor;
 
             EditorGUILayout.BeginHorizontal();
-            GUI.backgroundColor = Color.cyan;
+            GUI.backgroundColor = logHeaderColor;
             UnityBuildGUIUtility.DropdownHeader(
-                "Log (" + warningCount + ")",
+                $"Log ({warningCount})",
                 ref show, true,
                 GUILayout.ExpandWidth(true));
 
             if (clearableCount > 0)
             {
                 if (GUILayout.Button(clearButtonContent, UnityBuildGUIUtility.helpButtonStyle))
-                {
                     BuildNotificationList.instance.RefreshNotifications();
-                }
             }
 
             GUI.backgroundColor = defaultBackgroundColor;

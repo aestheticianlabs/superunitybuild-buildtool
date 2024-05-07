@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -92,7 +89,7 @@ namespace SuperUnityBuild.BuildTool
                 GUILayout.Space(5);
                 EditorGUILayout.BeginHorizontal();
                 show = showBuildInfo.isExpanded;
-                UnityBuildGUIUtility.DropdownHeader("Build Info", ref show, false, GUILayout.ExpandWidth(true));
+                UnityBuildGUIUtility.DropdownHeader("Selected Build Info", ref show, false, GUILayout.ExpandWidth(true));
                 showBuildInfo.isExpanded = show;
                 EditorGUILayout.EndHorizontal();
 
@@ -108,15 +105,17 @@ namespace SuperUnityBuild.BuildTool
                     {
                         BuildReleaseType releaseType;
                         BuildPlatform platform;
-                        BuildArchitecture arch;
-                        BuildDistribution dist;
+                        BuildArchitecture architecture;
+                        BuildDistribution distribution;
+                        BuildScriptingBackend scriptingBackend;
                         BuildOptions buildOptions = BuildOptions.None;
 
-                        bool parseSuccess = BuildSettings.projectConfigurations.ParseKeychain(selectedKeyChain.stringValue, out releaseType, out platform, out arch, out dist);
+                        bool parseSuccess = BuildSettings.projectConfigurations.ParseKeychain(selectedKeyChain.stringValue, out releaseType, out platform,
+                            out architecture, out scriptingBackend, out distribution);
 
                         if (parseSuccess)
                         {
-                            string defines = BuildProject.GenerateDefaultDefines(releaseType, platform, arch, dist);
+                            string defines = BuildProject.GenerateDefaultDefines(releaseType, platform, architecture, scriptingBackend, distribution);
 
                             EditorGUILayout.LabelField("Misc Info", UnityBuildGUIUtility.midHeaderStyle);
                             EditorGUILayout.LabelField("Defines:");
@@ -140,26 +139,31 @@ namespace SuperUnityBuild.BuildTool
                                 EditorGUILayout.LabelField("Name:\t\t" + platform.platformName);
                             }
 
-                            if (arch != null)
+                            if (architecture != null)
                             {
                                 EditorGUILayout.LabelField("Architecture", UnityBuildGUIUtility.midHeaderStyle);
-                                EditorGUILayout.LabelField("Name:\t\t" + arch.name);
+                                EditorGUILayout.LabelField("Name:\t\t" + architecture.name);
                             }
 
-                            if (dist != null)
+                            if (distribution != null)
                             {
                                 EditorGUILayout.LabelField("Distribution", UnityBuildGUIUtility.midHeaderStyle);
-                                EditorGUILayout.LabelField("Name:\t\t" + dist.distributionName);
+                                EditorGUILayout.LabelField("Name:\t\t" + distribution.distributionName);
+                            }
+
+                            if (scriptingBackend != null)
+                            {
+                                EditorGUILayout.LabelField("Scripting Backend", UnityBuildGUIUtility.midHeaderStyle);
+                                EditorGUILayout.LabelField("Name:\t\t" + scriptingBackend.name);
                             }
 
                             GUILayout.Space(20);
-                            GUI.backgroundColor = Color.green;
-                            if (GUILayout.Button("Build", GUILayout.ExpandWidth(true)))
+                            if (UnityBuildGUIUtility.BuildButton("Build"))
                             {
                                 EditorApplication.delayCall += () =>
                                     BuildProject.BuildSingle(selectedKeyChain.stringValue, buildOptions);
                             }
-                            if (GUILayout.Button("Build and Run", GUILayout.ExpandWidth(true)))
+                            if (UnityBuildGUIUtility.BuildButton("Build and Run"))
                             {
                                 buildOptions |= BuildOptions.AutoRunPlayer;
                                 BuildOptions finalBuildOptions = buildOptions;
@@ -168,7 +172,7 @@ namespace SuperUnityBuild.BuildTool
                             }
 
                             EditorGUI.BeginDisabledGroup((buildOptions & BuildOptions.Development) != BuildOptions.Development);
-                            if (GUILayout.Button("Build and Run with Profiler", GUILayout.ExpandWidth(true)))
+                            if (UnityBuildGUIUtility.BuildButton("Build and Run with Profiler"))
                             {
                                 buildOptions |= BuildOptions.AutoRunPlayer;
                                 buildOptions |= BuildOptions.ConnectWithProfiler;
@@ -177,7 +181,6 @@ namespace SuperUnityBuild.BuildTool
                                     BuildProject.BuildSingle(selectedKeyChain.stringValue, finalBuildOptions);
                             }
                             EditorGUI.EndDisabledGroup();
-                            GUI.backgroundColor = defaultBackgroundColor;
 
                             if (GUILayout.Button(new GUIContent("Configure Editor Environment", "Switches platform, refreshes BuildConstants, applies scripting defines and variant settings and sets Build Settings scene list to match the selected build configuration"), GUILayout.ExpandWidth(true)))
                             {
@@ -231,7 +234,7 @@ namespace SuperUnityBuild.BuildTool
                 }
                 else
                 {
-                    text = UnityBuildGUIUtility.ToLabel(tooltip);
+                    text = tooltip;
                     config.enabled = EditorGUILayout.Toggle(config.enabled, GUILayout.ExpandWidth(false), GUILayout.MaxWidth(10));
                 }
 

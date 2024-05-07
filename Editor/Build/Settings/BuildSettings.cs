@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEngine;
 
 namespace SuperUnityBuild.BuildTool
@@ -66,60 +67,55 @@ namespace SuperUnityBuild.BuildTool
 
         #region Properties
 
-        public static BasicSettings basicSettings
+        public static BasicSettings basicSettings { get => instance._basicSettings; }
+        public static ProductParameters productParameters { get => instance._productParameters; }
+        public static BuildReleaseTypeList releaseTypeList { get => instance._releaseTypeList; }
+        public static BuildPlatformList platformList { get => instance._platformList; }
+        public static ProjectConfigurations projectConfigurations { get => instance._projectConfigurations; }
+        public static BuildActionList preBuildActions { get => instance._preBuildActions; }
+        public static BuildActionList postBuildActions { get => instance._postBuildActions; }
+
+        #endregion
+
+        #region Events
+
+        [OnOpenAssetAttribute(1)]
+        public static bool HandleOpenAsset(int instanceID, int line)
         {
-            get
+            var assetPath = AssetDatabase.GetAssetPath(instanceID);
+            if(assetPath == null)
             {
-                return instance._basicSettings;
+                //Asset did not exist
+                return false;
             }
+            var asset = AssetDatabase.LoadAssetAtPath<BuildSettings>(assetPath);
+            if(asset == null)
+            {
+                //Not the right type
+                return false;
+            }
+
+            asset.OpenInUnityBuildWindow();
+
+            return true;
         }
 
-        public static ProductParameters productParameters
+        public void OpenInUnityBuildWindow()
         {
-            get
+            //Show the window using the same process as pressing the menu button
+            UnityBuildWindow.ShowWindow();
+            var thisWindow = EditorWindow.GetWindow<UnityBuildWindow>();
+            if (thisWindow != null)
             {
-                return instance._productParameters;
-            }
-        }
+                //If the window exists
 
-        public static BuildReleaseTypeList releaseTypeList
-        {
-            get
-            {
-                return instance._releaseTypeList;
-            }
-        }
+                //Set this as the current BuildSettings to be used
+                BuildSettings.instance = this;
 
-        public static BuildPlatformList platformList
-        {
-            get
-            {
-                return instance._platformList;
+                //Tell the window to use the new settings 
+                thisWindow.RefreshSelectedBuildSettings();
             }
-        }
 
-        public static ProjectConfigurations projectConfigurations
-        {
-            get
-            {
-                return instance._projectConfigurations;
-            }
-        }
-
-        public static BuildActionList preBuildActions
-        {
-            get
-            {
-                return instance._preBuildActions;
-            }
-        }
-
-        public static BuildActionList postBuildActions
-        {
-            get
-            {
-                return instance._postBuildActions;
-            }
         }
 
         #endregion

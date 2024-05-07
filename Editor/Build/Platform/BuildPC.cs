@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 
 namespace SuperUnityBuild.BuildTool
 {
-    [System.Serializable]
+    [Serializable]
     public class BuildPC : BuildPlatform
     {
         #region Constants
@@ -13,7 +14,6 @@ namespace SuperUnityBuild.BuildTool
             {BuildOutputType.App, "{0}.exe"},
             {BuildOutputType.VisualStudioSolution, "{0}.sln"},
         };
-        private const string _dataDirNameFormat = "{0}_Data";
         private const BuildTargetGroup _targetGroup = BuildTargetGroup.Standalone;
 
         private const string _buildOutputTypeVariantId = "Build Output";
@@ -35,7 +35,6 @@ namespace SuperUnityBuild.BuildTool
         public override void Init()
         {
             platformName = _name;
-            dataDirNameFormat = _dataDirNameFormat;
             targetGroup = _targetGroup;
 
             if (architectures == null || architectures.Length == 0)
@@ -43,6 +42,15 @@ namespace SuperUnityBuild.BuildTool
                 architectures = new BuildArchitecture[] {
                     new BuildArchitecture(BuildTarget.StandaloneWindows, "Windows x86", true, _binaryNameFormats[0]),
                     new BuildArchitecture(BuildTarget.StandaloneWindows64, "Windows x64", false, _binaryNameFormats[0])
+                };
+            }
+
+            if (scriptingBackends == null || scriptingBackends.Length == 0)
+            {
+                scriptingBackends = new BuildScriptingBackend[]
+                {
+                    new BuildScriptingBackend(ScriptingImplementation.Mono2x, true),
+                    new BuildScriptingBackend(ScriptingImplementation.IL2CPP, false),
                 };
             }
 

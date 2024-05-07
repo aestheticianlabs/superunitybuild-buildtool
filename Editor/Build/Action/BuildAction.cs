@@ -1,18 +1,19 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace SuperUnityBuild.BuildTool
 {
-    [System.Serializable]
+    [Serializable]
     public class BuildAction : ScriptableObject // This really should be an abstract class but needs to be concrete to work with Unity serialization.
     {
         public enum ActionType
         {
             SingleRun,
-            PerPlatform
+            PerBuild
         }
 
-        public ActionType actionType = ActionType.PerPlatform;
+        public ActionType actionType = ActionType.PerBuild;
         public string actionName = string.Empty;
         public string note = string.Empty;
         public bool actionEnabled = true;
@@ -33,16 +34,35 @@ namespace SuperUnityBuild.BuildTool
             BuildReleaseType releaseType,
             BuildPlatform platform,
             BuildArchitecture architecture,
+            BuildScriptingBackend scriptingBackend,
             BuildDistribution distribution,
-            System.DateTime buildTime, ref BuildOptions options, string configKey, string buildPath)
+            DateTime buildTime, ref BuildOptions options, string configKey, string buildPath)
         {
+        }
+
+        public static string ResolveExecuteTokens(string prototype)
+        {
+            DateTime runTime = DateTime.Now;
+
+            prototype = TokensUtility.ResolveBuildTimeTokens(prototype, runTime);
+            prototype = TokensUtility.ResolveBuildVersionTokens(prototype);
+
+            return prototype;
+        }
+
+        public static string ResolvePerBuildExecuteTokens(string prototype, BuildReleaseType releaseType, BuildPlatform platform, BuildArchitecture architecture, BuildScriptingBackend scriptingBackend, BuildDistribution distribution, DateTime buildTime, string buildPath)
+        {
+            prototype = TokensUtility.ResolveBuildOutputTokens(prototype, buildPath);
+            prototype = TokensUtility.ResolveBuildConfigurationTokens(prototype, releaseType, platform, architecture, scriptingBackend, distribution, buildTime);
+
+            return prototype;
         }
 
         public void Draw(SerializedObject obj)
         {
             DrawProperties(obj);
 
-            System.Type myType = GetType();
+            Type myType = GetType();
             bool isPreBuildAction = typeof(IPreBuildAction).IsAssignableFrom(myType);
             bool isPostBuildAction = typeof(IPostBuildAction).IsAssignableFrom(myType);
             bool isPreBuildPerPlatformAction = typeof(IPreBuildPerPlatformAction).IsAssignableFrom(myType);
@@ -51,35 +71,23 @@ namespace SuperUnityBuild.BuildTool
             bool actionTypeSelectable = false;
 
             if ((isPreBuildAction && isPreBuildPerPlatformAction) || (isPostBuildAction && isPostBuildPerPlatformAction))
-            {
                 actionTypeSelectable = true;
-            }
             else if (isPreBuildAction || isPostBuildAction)
-            {
                 actionType = ActionType.SingleRun;
-            }
             else if (isPreBuildPerPlatformAction || isPostBuildPerPlatformAction)
-            {
-                actionType = ActionType.PerPlatform;
-            }
+                actionType = ActionType.PerBuild;
 
             if (actionTypeSelectable)
-            {
                 actionType = (ActionType)EditorGUILayout.EnumPopup("Action Type", actionType);
-            }
 
             if (isPreBuildActionCanConfigureEditor)
-            {
                 EditorGUILayout.PropertyField(obj.FindProperty("configureEditor"));
-            }
 
             EditorGUILayout.PropertyField(obj.FindProperty("note"));
 
-            // Only Per-Platform actions can be filtered
-            if (actionType == ActionType.PerPlatform)
-            {
+            // Only Per-Build actions can be filtered
+            if (actionType == ActionType.PerBuild)
                 EditorGUILayout.PropertyField(obj.FindProperty("filter"), GUILayout.Height(0));
-            }
 
             obj.ApplyModifiedProperties();
         }
@@ -88,7 +96,7 @@ namespace SuperUnityBuild.BuildTool
         {
             string name = actionName;
             name += !string.IsNullOrEmpty(note) ?
-                " (" + note + ")" :
+                $" ({note})" :
                 "";
 
             return name;
