@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Don't open build folder after build if in batch mode.
 - Write notifications to log for CLI builds
 
+### Fixed
+
+- Don't increment build number on playmode entered
+
 ## [7.0.0] - 2023-10-03
 
 ### Added

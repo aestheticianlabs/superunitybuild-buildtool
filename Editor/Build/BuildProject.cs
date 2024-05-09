@@ -160,9 +160,6 @@ namespace SuperUnityBuild.BuildTool
 
         public static string GenerateVersionString(ProductParameters productParameters, DateTime buildTime, bool incrementBuildNumbers = true)
         {
-            // Increment build number
-            ++productParameters.buildCounter;
-
             // Build version string
             string prototype = TokensUtility.ResolveBuildNumberToken(productParameters.versionTemplate);
             prototype = TokensUtility.ResolveBuildTimeTokens(prototype, buildTime);
