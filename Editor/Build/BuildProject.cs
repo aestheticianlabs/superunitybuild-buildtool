@@ -162,8 +162,6 @@ namespace SuperUnityBuild.BuildTool
         {
             // Build version string
             string prototype = TokensUtility.ResolveBuildNumberToken(productParameters.versionTemplate);
-            prototype = TokensUtility.ResolveBuildTimeTokens(prototype, buildTime);
-
             StringBuilder sb = new StringBuilder(prototype);
 
             // Regex = (?:\$DAYSSINCE\(")([^"]*)(?:"\))
@@ -177,6 +175,9 @@ namespace SuperUnityBuild.BuildTool
                 sb.Replace(match.Captures[0].Value, daysSince.ToString());
                 match = match.NextMatch();
             }
+
+            // resolve time tokens after $DAYSSINCE so $DAYS doesn't match/replace first
+            TokensUtility.ResolveBuildTimeTokens(sb, buildTime);
 
             ReplaceFromFile(sb, "$NOUN", "nouns.txt");
             ReplaceFromFile(sb, "$ADJECTIVE", "adjectives.txt");

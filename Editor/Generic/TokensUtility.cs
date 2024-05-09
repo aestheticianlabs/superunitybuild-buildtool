@@ -37,18 +37,26 @@ namespace SuperUnityBuild.BuildTool
 
         public static string ResolveBuildOutputTokens(string prototype, string buildPath)
         {
-            return (prototype ?? "")
+            return (prototype ?? string.Empty)
                 .Replace("$BUILDPATH", buildPath)
                 .Replace("$BASEPATH", BuildSettings.basicSettings.baseBuildFolder);
         }
 
         public static string ResolveBuildTimeTokens(string prototype, DateTime buildTime)
         {
-            return (prototype ?? "")
+            return (prototype ?? string.Empty)
                 .Replace("$YEAR", buildTime.ToString("yyyy"))
                 .Replace("$MONTH", buildTime.ToString("MM"))
                 .Replace("$DAY", buildTime.ToString("dd"))
                 .Replace("$TIME", buildTime.ToString("hhmmss"));
+        }
+
+        public static void ResolveBuildTimeTokens(StringBuilder sb, DateTime buildTime)
+        {
+            sb.Replace("$YEAR", buildTime.ToString("yyyy"));
+            sb.Replace("$MONTH", buildTime.ToString("MM"));
+            sb.Replace("$DAY", buildTime.ToString("dd"));
+            sb.Replace("$TIME", buildTime.ToString("hhmmss"));
         }
 
         public static string ResolveBuildVersionToken(string prototype)
