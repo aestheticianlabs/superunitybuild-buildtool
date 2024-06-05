@@ -15,7 +15,7 @@ namespace SuperUnityBuild.BuildTool
 
         private static void PlaymodeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.ExitingEditMode)
+            if (state == PlayModeStateChange.ExitingEditMode && BuildSettings.productParameters.generateOnPlay)
             {
                 BuildProject.GenerateVersionString(BuildSettings.productParameters, DateTime.Now, false);
             }

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Don't increment build number on playmode entered
 - Prevent `$DAYS` token from breaking `$DAYSSINCE` token
+- Fix "Generate on Playmode Entered" not doing anything
 
 ## [7.0.0] - 2023-10-03
 
