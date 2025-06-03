@@ -17,7 +17,7 @@ namespace SuperUnityBuild.BuildTool
             UnityBuildTarget.StandaloneOSX or
             UnityBuildTarget.StandaloneWindows or UnityBuildTarget.StandaloneWindows64;
 
-        public BuildTarget(UnityBuildTarget type, string name, bool enabled, string binaryNameFormat, int subtarget = 0)
+        public BuildTarget(UnityBuildTarget type, string name, bool enabled, string binaryNameFormat, int subtarget = 2)
         {
             this.type = type;
             this.name = name;
