@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - $COMMIT token to include git commit hash in build version or path.
+- Added support for building from CLI with specified configuration(s).
+- Added support for configuring editor environment from CLI with a specified configuration.
 
 ### Changed
 
-- Added support for building from CLI with specified configuration(s).
 - Quit with non-zero exit code if any part of build failed
 - Don't open build folder after build if in batch mode.
 - Write notifications to log for CLI builds
