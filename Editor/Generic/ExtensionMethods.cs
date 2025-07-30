@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -19,7 +20,7 @@ namespace SuperUnityBuild.BuildTool
 
         public static string SanitizeDefine(this string input)
         {
-            return input.ToUpper().Replace(" ", "").SanitizeCodeString();
+            return input.ToUpperInvariant().Replace(" ", "").SanitizeCodeString();
         }
 
         public static string SanitizeFolderName(this string folderName)
@@ -43,15 +44,11 @@ namespace SuperUnityBuild.BuildTool
             trimChars = trimChars ?? new char[] { ' ' };
 
             if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
-            {
                 return value;
-            }
-            if (maxLength <= 0)
-            {
+            else if (maxLength <= 0)
                 return suffix;
-            }
-
-            return value.Substring(0, maxLength).Trim(trimChars) + suffix;
+            else
+                return value.Substring(0, maxLength).Trim(trimChars) + suffix;
         }
 
         public static void SafeDeleteArrayElementAtIndex(this SerializedProperty value, int i)
@@ -77,6 +74,7 @@ namespace SuperUnityBuild.BuildTool
         {
             T previous = default(T);
             bool first = true;
+
             foreach (T element in source)
             {
                 if (!first)
