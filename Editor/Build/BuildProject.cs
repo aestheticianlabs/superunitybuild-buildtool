@@ -60,10 +60,14 @@ namespace SuperUnityBuild.BuildTool
 			);
 
 			// Parse build config
-			_ = BuildSettings.projectConfigurations.ParseKeychain(
+			if(!BuildSettings.projectConfigurations.ParseKeychain(
 				configKey, out BuildReleaseType releaseType, out BuildPlatform platform, out BuildTarget target,
 				out BuildScriptingBackend scriptingBackend, out BuildDistribution distribution
-			);
+			))
+			{
+				Debug.LogError($"Failed to parse keychain \"{configKey}\"");
+				return;
+			}
 			string constantsFileLocation = BuildSettings.basicSettings.constantsFileLocation;
 
 			// Configure environment
@@ -329,10 +333,21 @@ namespace SuperUnityBuild.BuildTool
 				// Parse build config and perform build.
 				string notification = string.Format("Building ({0}/{1}): ", i + 1, buildConfigs.Length);
 				string constantsFileLocation = BuildSettings.basicSettings.constantsFileLocation;
-				_ = BuildSettings.projectConfigurations.ParseKeychain(
+				if(!BuildSettings.projectConfigurations.ParseKeychain(
 					configKey, out BuildReleaseType releaseType, out BuildPlatform platform, out BuildTarget target,
 					out BuildScriptingBackend scriptingBackend, out BuildDistribution distribution
-				);
+				))
+				{
+					BuildNotificationList.instance.AddNotification(
+						new BuildNotification(
+							BuildNotification.Category.Error,
+							$"Failed to parse keychain \"{configKey}\""
+						)
+					);
+
+					++failCount;
+					return;
+				}
 				bool success = BuildPlayer(
 					notification, releaseType, platform, target, scriptingBackend, distribution, buildTime, options,
 					constantsFileLocation, configKey
